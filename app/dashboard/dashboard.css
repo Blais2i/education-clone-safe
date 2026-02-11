@@ -1,0 +1,24 @@
+/* Dashboard Layout Styles */
+
+.dashboard-wrapper {
+  min-height: 100vh;
+  background-color: #ffff00;
+  padding-bottom: 60px;
+}
+
+.main-content {
+  max-width: 1400px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.footer {
+  background: #ffff00;
+  text-align: center;
+  padding: 20px;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-top: 2px solid #e6e600;
+}
