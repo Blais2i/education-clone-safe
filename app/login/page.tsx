@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -10,14 +11,31 @@ export default function LoginPage() {
     email: '',
     password: '',
   });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Add your authentication logic here
-    console.log('Login attempt:', formData);
-    
-    // For now, just redirect to dashboard
-    router.push('/dashboard');
+    setError('');
+    setLoading(true);
+
+    const supabase = createClient();
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (error) throw error;
+
+      router.push('/dashboard');
+      router.refresh();
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,11 +49,23 @@ export default function LoginPage() {
     <div className="login-container">
       <div className="login-box">
         <div className="logo">
-          {/* Add your logo here */}
           <h1>Logo</h1>
         </div>
 
         <h2>Login to your account</h2>
+
+        {error && (
+          <div style={{ 
+            color: '#ff3333', 
+            marginBottom: '20px', 
+            textAlign: 'center',
+            padding: '10px',
+            background: '#ffe6e6',
+            borderRadius: '5px'
+          }}>
+            {error}
+          </div>
+        )}
 
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
@@ -46,6 +76,7 @@ export default function LoginPage() {
               required
               value={formData.email}
               onChange={handleChange}
+              disabled={loading}
             />
           </div>
 
@@ -57,11 +88,12 @@ export default function LoginPage() {
               required
               value={formData.password}
               onChange={handleChange}
+              disabled={loading}
             />
           </div>
 
-          <button type="submit" className="btn-login">
-            Login
+          <button type="submit" className="btn-login" disabled={loading}>
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
@@ -148,6 +180,12 @@ export default function LoginPage() {
         .btn-login:hover {
           transform: translateY(-2px);
           box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-login:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+          transform: none;
         }
 
         .signup-link {
