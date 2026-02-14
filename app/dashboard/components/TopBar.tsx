@@ -1,3 +1,4 @@
+// app/dashboard/components/TopBar.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -6,18 +7,16 @@ import './TopBar.css';
 
 export default function TopBar() {
   const [balance, setBalance] = useState<number | null>(null);
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadUserData() {
       const supabase = createClient();
       
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        // Get profile with balance
         const { data: profile } = await supabase
           .from('profiles')
           .select('account_balance, email')
@@ -26,9 +25,7 @@ export default function TopBar() {
         
         if (profile) {
           setBalance(profile.account_balance);
-          // Use email username (part before @) as display name
-          const username = profile.email.split('@')[0];
-          setEmail(username || 'User');
+          setUsername(profile.email.split('@')[0] || 'User');
         }
       }
       
@@ -38,32 +35,38 @@ export default function TopBar() {
     loadUserData();
   }, []);
 
-  const handleAddFunds = () => {
-    alert('Add funds feature coming soon!');
-  };
-
-  const handleRefund = () => {
-    alert('Refund request feature coming soon!');
-  };
-
   return (
     <div className="top-bar">
       <div className="top-bar-content">
-        <div className="account-balance">
-          <span>Account Balance: ${loading ? '...' : balance?.toFixed(2) || '0.00'}</span>
+        <div className="logo-section">
+          <span className="logo-icon">💳</span>
+          <span className="logo-text">Cards City</span>
+          <span className="logo-badge">2026</span>
         </div>
-        <div className="top-actions">
-          <button className="btn-primary" onClick={handleAddFunds}>
-            Add Funds
+
+        <div className="balance-section">
+          <span className="balance-label">Balance</span>
+          <span className="balance-amount">
+            ${loading ? '...' : balance?.toFixed(2) || '0.00'}
+          </span>
+        </div>
+
+        <div className="action-buttons">
+          <button className="btn-add">
+            <span>+</span> Add Funds
           </button>
-          <button className="btn-secondary" onClick={handleRefund}>
-            Refund
+          <button className="btn-refund">
+            <span>↩</span> Refund
           </button>
-          <div className="user-menu">
-            <div className="user-avatar">
-              <span>{email.charAt(0).toUpperCase()}</span>
-            </div>
-            <span>Hi, {loading ? '...' : email}</span>
+        </div>
+
+        <div className="user-profile">
+          <div className="user-avatar">
+            {username.charAt(0).toUpperCase()}
+          </div>
+          <div className="user-info">
+            <span className="user-greeting">Hi,</span>
+            <span className="user-name">{loading ? '...' : username}</span>
           </div>
         </div>
       </div>

@@ -1,3 +1,4 @@
+// app/dashboard/layout.tsx
 import React from 'react';
 import TopBar from './components/TopBar';
 import NavBar from './components/NavBar';
@@ -17,7 +18,7 @@ export default function DashboardLayout({
         {children}
       </main>
       <footer className="footer">
-        <p>©2025 Logs City</p>
+        <p>©2026 Cards City - Your Premium Marketplace</p>
       </footer>
       <ChatWidget />
     </div>

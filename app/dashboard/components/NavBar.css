@@ -1,22 +1,27 @@
-/* NavBar Component Styles */
-
+/* app/dashboard/components/NavBar.css - Clean Theme */
 .main-nav {
-  background: linear-gradient(135deg, #003399 0%, #0052cc 100%);
-  padding: 15px 0;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  position: relative;
-  z-index: 1000;
+  background: white;
+  border-bottom: 1px solid var(--border-color);
+  padding: 8px 0;
+  position: sticky;
+  top: 70px;
+  z-index: 900;
+  box-shadow: var(--shadow-sm);
 }
 
 .nav-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 24px;
   display: flex;
-  gap: 30px;
   align-items: center;
-  flex-wrap: wrap;
-  position: relative;
+  justify-content: space-between;
+}
+
+.nav-items {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .nav-item-wrapper {
@@ -24,77 +29,80 @@
 }
 
 .nav-item {
-  color: white;
+  color: var(--text-secondary);
   text-decoration: none;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 15px;
-  border-radius: 5px;
-  transition: background 0.3s;
+  padding: 8px 16px;
+  border-radius: 40px;
+  transition: all 0.2s;
   font-weight: 500;
-  position: relative;
   cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
 }
 
 .nav-item.active {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--accent-yellow);
+  color: var(--text-primary);
+  border-color: var(--accent-yellow-dark);
 }
 
 .nav-icon {
-  width: 20px;
-  height: 20px;
+  font-size: 18px;
 }
 
 .dropdown-arrow {
+  transition: transform 0.2s;
   margin-left: 4px;
-  transition: transform 0.3s;
 }
 
 .nav-item-wrapper:hover .dropdown-arrow {
   transform: rotate(180deg);
 }
 
-.badge-new {
-  background: #00ff00;
-  color: #000;
+/* VIP Item */
+.vip-item {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 1px solid var(--accent-yellow);
+  color: var(--text-primary);
+}
+
+.vip-item:hover {
+  background: linear-gradient(135deg, #fde68a, #fbbf24);
+}
+
+.badge-vip {
+  background: var(--text-primary);
+  color: var(--accent-yellow);
   padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: bold;
-  margin-left: 5px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
-.nav-item.logout {
-  margin-left: auto;
-  background: none;
-  border: none;
-  color: white;
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.nav-item.logout:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-/* Dropdown Menu Styles */
+/* Dropdown Menu */
 .dropdown-menu {
   position: absolute;
   top: 100%;
   left: 0;
   min-width: 200px;
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
   padding: 8px 0;
-  margin-top: 5px;
+  margin-top: 8px;
   animation: dropdownFade 0.2s ease;
   z-index: 1001;
+  box-shadow: var(--shadow-lg);
 }
 
 @keyframes dropdownFade {
@@ -111,134 +119,54 @@
 .dropdown-item {
   display: block;
   padding: 10px 20px;
-  color: #333;
+  color: var(--text-secondary);
   text-decoration: none;
   font-size: 14px;
   transition: all 0.2s;
-  white-space: nowrap;
 }
 
 .dropdown-item:hover {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding-left: 24px;
 }
 
-.dropdown-item:first-child:hover {
-  border-radius: 8px 8px 0 0;
+/* Logout Button */
+.nav-item.logout {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
 }
 
-.dropdown-item:last-child:hover {
-  border-radius: 0 0 8px 8px;
+.nav-item.logout:hover {
+  background: #fee2e2;
+  border-color: var(--accent-red);
+  color: var(--accent-red);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .nav-container {
     flex-direction: column;
     gap: 10px;
-    align-items: stretch;
+  }
+
+  .nav-items {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   .nav-item-wrapper {
-    width: 100%;
-  }
-
-  .nav-item {
-    width: 100%;
-    justify-content: space-between;
+    width: auto;
   }
 
   .dropdown-menu {
-    position: static;
-    width: 100%;
-    margin-top: 0;
-    box-shadow: none;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 0 0 5px 5px;
-  }
-
-  .dropdown-item {
-    color: white;
-    padding-left: 45px;
-  }
-
-  .dropdown-item:hover {
-    background: rgba(255, 255, 255, 0.2);
+    position: absolute;
+    min-width: 180px;
   }
 
   .nav-item.logout {
-    margin-left: 0;
     width: 100%;
     justify-content: center;
   }
-}
-/* Add these to your existing NavBar.css */
-
-/* VIP Item Styles */
-.vip-item {
-  background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
-  color: #000;
-  font-weight: bold;
-  position: relative;
-  overflow: hidden;
-}
-
-.vip-item::before {
-  content: '👑';
-  position: absolute;
-  left: -20px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 20px;
-  opacity: 0.3;
-  animation: sparkle 2s infinite;
-}
-
-@keyframes sparkle {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.8; }
-}
-
-.vip-item:hover {
-  background: linear-gradient(135deg, #ffed4e 0%, #ffb347 100%);
-}
-
-.badge-vip {
-  background: #000;
-  color: #ffd700;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 10px;
-  font-weight: bold;
-  margin-left: 5px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-/* VIP Dropdown */
-.vip-dropdown {
-  border: 2px solid #ffd700;
-  background: linear-gradient(135deg, #fff9e6 0%, #fff0d4 100%);
-}
-
-.vip-dropdown .dropdown-item {
-  color: #000;
-  font-weight: 500;
-  border-left: 3px solid transparent;
-}
-
-.vip-dropdown .dropdown-item:hover {
-  background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
-  color: #000;
-  border-left: 3px solid #000;
-}
-
-/* Crown Icon Animation */
-.nav-icon-crown {
-  animation: glow 2s ease-in-out infinite;
-}
-
-@keyframes glow {
-  0%, 100% { filter: drop-shadow(0 0 2px #ffd700); }
-  50% { filter: drop-shadow(0 0 8px #ffa500); }
 }

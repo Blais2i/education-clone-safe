@@ -1,5 +1,4 @@
-/* ChatWidget Component Styles */
-
+/* app/dashboard/components/ChatWidget.css */
 .chat-widget {
   position: fixed;
   bottom: 80px;
@@ -15,25 +14,27 @@
 .chat-bubble {
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #00bfa5, #00897b);
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
   position: relative;
-  transition: transform 0.3s;
+  transition: all 0.3s;
+  border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .chat-bubble:hover {
   transform: scale(1.1);
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
 }
 
 .chat-notification {
   position: absolute;
   top: -5px;
   right: -5px;
-  background: #ff0000;
+  background: var(--accent-red);
   color: white;
   width: 24px;
   height: 24px;
@@ -43,14 +44,17 @@
   justify-content: center;
   font-size: 12px;
   font-weight: bold;
+  border: 2px solid var(--bg-primary);
 }
 
 .chat-text {
-  color: #000;
-  font-weight: bold;
+  color: var(--text-primary);
+  font-weight: 600;
   font-size: 14px;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 5px 10px;
-  border-radius: 5px;
+  background: var(--bg-card);
+  padding: 8px 15px;
+  border-radius: 20px;
   margin: 0;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
