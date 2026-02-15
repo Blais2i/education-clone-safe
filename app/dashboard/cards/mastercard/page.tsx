@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import EmailModal from './components/EmailModal';
 import PaymentModal from './components/PaymentModal';
 
 // Mock data for Mastercard cards with minimum $30 price
@@ -246,7 +247,9 @@ const mastercardCards = [
 
 export default function MastercardPage() {
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [customerEmail, setCustomerEmail] = useState('');
   const [filterBin, setFilterBin] = useState('');
   const [filterBank, setFilterBank] = useState('');
   const [filterLevel, setFilterLevel] = useState('');
@@ -259,12 +262,19 @@ export default function MastercardPage() {
 
   const handleBuyNow = (item: any) => {
     setSelectedItem(item);
+    setShowEmailModal(true);
+  };
+
+  const handleEmailSubmit = (email: string) => {
+    setCustomerEmail(email);
+    setShowEmailModal(false);
     setShowPaymentModal(true);
   };
 
   const handlePaymentComplete = () => {
     setShowPaymentModal(false);
     setSelectedItem(null);
+    setCustomerEmail('');
     // Here you would typically update the card status to 'soldout'
     // and handle the download of the card details
   };
@@ -440,10 +450,19 @@ export default function MastercardPage() {
         </div>
       )}
 
-      {/* Payment Modal */}
+      {/* Modals */}
+      {showEmailModal && selectedItem && (
+        <EmailModal
+          item={selectedItem}
+          onClose={() => setShowEmailModal(false)}
+          onSubmit={handleEmailSubmit}
+        />
+      )}
+
       {showPaymentModal && selectedItem && (
         <PaymentModal
           item={selectedItem}
+          email={customerEmail}
           onClose={() => setShowPaymentModal(false)}
           onComplete={handlePaymentComplete}
         />

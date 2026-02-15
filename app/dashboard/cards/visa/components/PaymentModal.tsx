@@ -1,4 +1,4 @@
-// app/dashboard/cards/mastercard/components/PaymentModal.tsx
+// app/dashboard/cards/visa/components/PaymentModal.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -112,7 +112,7 @@ export default function PaymentModal({ item, email, onClose, onComplete }: Payme
             <h4>Order Summary:</h4>
             <div className="summary-row">
               <span>Item:</span>
-              <span>Mastercard {item.cardType}</span>
+              <span>Visa {item.level}</span>
             </div>
             <div className="summary-row">
               <span>Bank:</span>
@@ -215,7 +215,7 @@ export default function PaymentModal({ item, email, onClose, onComplete }: Payme
         }
 
         .modal-header {
-          background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+          background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
           color: white;
           padding: 30px 30px 20px;
           border-radius: 20px 20px 0 0;
@@ -313,8 +313,8 @@ export default function PaymentModal({ item, email, onClose, onComplete }: Payme
         }
 
         .network-btn.active {
-          border-color: #ff6b6b;
-          background: #fff0f0;
+          border-color: #1e3c72;
+          background: #f0f5ff;
         }
 
         .network-name {
@@ -388,16 +388,16 @@ export default function PaymentModal({ item, email, onClose, onComplete }: Payme
           gap: 10px;
           padding: 12px 25px;
           background: white;
-          border: 2px dashed #ff6b6b;
+          border: 2px dashed #1e3c72;
           border-radius: 8px;
-          color: #ff6b6b;
+          color: #1e3c72;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.2s;
         }
 
         .btn-scan:hover {
-          background: #fff0f0;
+          background: #f0f5ff;
         }
 
         .qr-icon {
