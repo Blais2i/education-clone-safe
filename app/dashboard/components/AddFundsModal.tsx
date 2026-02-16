@@ -18,11 +18,8 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
 
-  // Your USDT receiving address (TRC20)
+  // YOUR USDT address - hardcoded or from env
   const COMPANY_USDT_ADDRESS = 'TDavcRJkujU6RXDreuy3942KZHEUvI4iBK';
-  
-  // USDT to USD rate (1 USDT = 1 USD, but you might want to fetch real rate)
-  const USDT_RATE = 1;
 
   const handleAmountSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +32,8 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
         throw new Error('Minimum deposit is $10 USD');
       }
 
-      const usdtValue = (usdValue / USDT_RATE).toFixed(2);
+      // Simple 1:1 conversion (adjust if needed)
+      const usdtValue = usdValue.toFixed(2);
       setUsdtAmount(usdtValue);
 
       const supabase = createClient();
@@ -43,7 +41,7 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
 
       if (!user) throw new Error('Please login first');
 
-      // Create deposit record
+      // Create deposit record with status 'pending'
       const { data: newDeposit, error: depositError } = await supabase
         .from('deposits')
         .insert({
@@ -51,7 +49,7 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
           amount_usd: usdValue,
           amount_usdt: usdtValue,
           usdt_address: COMPANY_USDT_ADDRESS,
-          status: 'pending'
+          status: 'pending'  // Will be manually updated by you
         })
         .select()
         .single();
@@ -61,42 +59,11 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
       setDeposit(newDeposit);
       setStep(2);
 
-      // Start checking for transaction
-      startTransactionCheck(newDeposit.id);
-
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  };
-
-  const startTransactionCheck = (depositId: string) => {
-    // Check every 30 seconds for 30 minutes
-    const checkInterval = setInterval(async () => {
-      const supabase = createClient();
-      
-      const { data: deposit } = await supabase
-        .from('deposits')
-        .select('*')
-        .eq('id', depositId)
-        .single();
-
-      if (deposit?.status === 'completed') {
-        clearInterval(checkInterval);
-        onSuccess(deposit.amount_usd);
-        onClose();
-      } else if (deposit?.status === 'expired') {
-        clearInterval(checkInterval);
-        setError('Payment time expired. Please try again.');
-        setStep(1);
-      }
-    }, 30000);
-
-    // Auto-expire after 30 minutes
-    setTimeout(() => {
-      clearInterval(checkInterval);
-    }, 30 * 60 * 1000);
   };
 
   const handleCopy = (text: string) => {
@@ -105,9 +72,29 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleComplete = () => {
-    // User clicked "I've sent payment"
-    setStep(3);
+  const handlePaymentSent = async () => {
+    setLoading(true);
+    
+    try {
+      // Just notify that user clicked the button
+      // You'll manually verify later
+      setStep(3);
+      
+      // Optional: Send yourself a notification
+      await fetch('/api/notify-payment', {
+        method: 'POST',
+        body: JSON.stringify({
+          depositId: deposit.id,
+          userId: deposit.user_id,
+          amount: deposit.amount_usd
+        })
+      });
+      
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -143,11 +130,11 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
                     required
                   />
                 </div>
-                <p className="input-note">You will pay approximately {usdtAmount || '0'} USDT</p>
+                <p className="input-note">You will send approximately {usdtAmount || '0'} USDT</p>
               </div>
 
               <button type="submit" className="btn-proceed" disabled={loading}>
-                {loading ? 'Creating deposit...' : 'Proceed to Payment'}
+                {loading ? 'Creating deposit...' : 'Continue to Payment'}
               </button>
             </form>
           )}
@@ -155,8 +142,8 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
           {step === 2 && deposit && (
             <div className="payment-section">
               <div className="status-section">
-                <h3>⏳ Waiting for Payment</h3>
-                <p>Send exactly <strong>{deposit.amount_usdt} USDT</strong> (TRC20)</p>
+                <h3>📤 Send USDT to this address</h3>
+                <p>Amount to send: <strong>{deposit.amount_usdt} USDT</strong> (TRC20)</p>
               </div>
 
               <div className="address-section">
@@ -194,30 +181,44 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
                   <span>Network:</span>
                   <span>TRC20</span>
                 </div>
+                <div className="summary-row">
+                  <span>Status:</span>
+                  <span className="status-pending">Awaiting payment</span>
+                </div>
               </div>
 
               <div className="instructions">
                 <p>⚠️ Send ONLY USDT on TRC20 network to this address</p>
-                <p>⏱️ Deposit will be credited after 1 network confirmation</p>
-                <p>🔔 The page will auto-update when payment is received</p>
+                <p>⏱️ After sending, click the button below</p>
+                <p>👨‍💼 Admin will verify and credit your account manually</p>
               </div>
 
               <button 
                 className="btn-confirm"
-                onClick={handleComplete}
+                onClick={handlePaymentSent}
+                disabled={loading}
               >
-                I've Sent Payment
+                {loading ? 'Processing...' : "✅ I've Sent the Payment"}
               </button>
             </div>
           )}
 
           {step === 3 && (
             <div className="confirmation-section">
-              <div className="success-icon">✅</div>
-              <h3>Payment Confirmed!</h3>
-              <p>Your deposit of ${deposit?.amount_usd} is being processed.</p>
-              <p>It will appear in your balance within 1-5 minutes.</p>
-              <button className="btn-proceed" onClick={onClose}>
+              <div className="success-icon">⏳</div>
+              <h3>Payment Notification Sent!</h3>
+              <p>Thank you! Our team has been notified.</p>
+              <div className="info-box">
+                <p><strong>Deposit Details:</strong></p>
+                <p>Amount: ${deposit?.amount_usd}</p>
+                <p>USDT Sent: {deposit?.amount_usdt} USDT</p>
+                <p>Date: {new Date().toLocaleString()}</p>
+              </div>
+              <p className="processing-note">
+                🔔 An admin will verify your payment and credit your account within 24 hours.<br/>
+                You'll see the balance update automatically when processed.
+              </p>
+              <button className="btn-close" onClick={onClose}>
                 Close
               </button>
             </div>
@@ -421,6 +422,11 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
           border-bottom: none;
         }
 
+        .status-pending {
+          color: #f59e0b;
+          font-weight: 600;
+        }
+
         .instructions {
           background: #fff3cd;
           border: 1px solid #ffeeba;
@@ -442,14 +448,51 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
           cursor: pointer;
         }
 
+        .btn-confirm:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+        }
+
         .confirmation-section {
           text-align: center;
-          padding: 30px;
+          padding: 20px;
         }
 
         .success-icon {
           font-size: 64px;
           margin-bottom: 20px;
+        }
+
+        .info-box {
+          background: #f8f9fa;
+          border-radius: 8px;
+          padding: 20px;
+          margin: 20px 0;
+          text-align: left;
+        }
+
+        .info-box p {
+          margin: 5px 0;
+        }
+
+        .processing-note {
+          background: #e8f4fd;
+          color: #0056b3;
+          padding: 15px;
+          border-radius: 8px;
+          margin: 20px 0;
+          font-size: 14px;
+        }
+
+        .btn-close {
+          width: 100%;
+          padding: 16px;
+          background: #6c757d;
+          color: white;
+          border: none;
+          border-radius: 10px;
+          font-size: 16px;
+          cursor: pointer;
         }
 
         .status-section {

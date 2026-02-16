@@ -39,8 +39,7 @@ export default function NavBar() {
       icon: '👑',
       badge: 'PREMIUM',
       dropdown: [
-        { name: 'Card Loading', href: '/dashboard/vip/card-loading' },
-        { name: 'Address Delivery', href: '/dashboard/vip/address-delivery' }
+        { name: 'Cash-Out Service', href: '/dashboard/vip/cashout' }
       ]
     },
   ];
@@ -160,86 +159,6 @@ export default function NavBar() {
           <span className="nav-label">Logout</span>
         </button>
       </div>
-
-      <style jsx>{`
-        .dropdown-arrow {
-          transition: transform 0.3s ease;
-        }
-        
-        .dropdown-arrow.rotated {
-          transform: rotate(180deg);
-        }
-        
-        .nav-item.dropdown-open {
-          background: var(--bg-hover);
-          border-color: var(--accent-yellow);
-        }
-        
-        .dropdown-menu {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          min-width: 220px;
-          background: white;
-          border: 1px solid var(--border-color);
-          border-radius: 12px;
-          padding: 8px 0;
-          margin-top: 8px;
-          animation: dropdownFade 0.2s ease;
-          z-index: 1001;
-          box-shadow: var(--shadow-lg);
-        }
-        
-        .dropdown-item {
-          display: block;
-          width: 100%;
-          text-align: left;
-          padding: 12px 20px;
-          background: none;
-          border: none;
-          color: var(--text-secondary);
-          font-size: 14px;
-          cursor: pointer;
-          transition: all 0.2s;
-          font-family: inherit;
-        }
-        
-        .dropdown-item:hover {
-          background: var(--bg-secondary);
-          color: var(--text-primary);
-          padding-left: 24px;
-        }
-        
-        .dropdown-item:active {
-          background: var(--accent-yellow);
-          color: var(--text-primary);
-        }
-        
-        @keyframes dropdownFade {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @media (max-width: 768px) {
-          .dropdown-menu {
-            position: static;
-            width: 100%;
-            margin-top: 5px;
-            box-shadow: none;
-            border: 1px solid var(--border-color);
-          }
-          
-          .nav-item-wrapper {
-            width: 100%;
-          }
-        }
-      `}</style>
     </nav>
   );
 }

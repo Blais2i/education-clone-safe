@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 interface PaymentModalProps {
   item: any;
@@ -13,6 +14,7 @@ interface PaymentModalProps {
 export default function PaymentModal({ item, email, onClose, onComplete }: PaymentModalProps) {
   const [copied, setCopied] = useState(false);
   const [selectedNetwork, setSelectedNetwork] = useState('TRC20');
+  const [sending, setSending] = useState(false);
   
   // Generate a random order ID
   const orderId = React.useMemo(() => {
@@ -21,7 +23,7 @@ export default function PaymentModal({ item, email, onClose, onComplete }: Payme
     for (let i = 0; i < 8; i++) {
       result += chars[Math.floor(Math.random() * chars.length)];
     }
-    return `${result}-${Math.floor(Math.random() * 1000)}-${result.slice(0,4)}-${result.slice(0,4)}2n`;
+    return `WF-${result}-${Math.floor(Math.random() * 1000)}`;
   }, []);
 
   const usdtAddress = 'TDavcRJkujU6RXDreuy3942KZHEUv4iBK';
@@ -33,13 +35,81 @@ export default function PaymentModal({ item, email, onClose, onComplete }: Payme
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleComplete = async () => {
+    setSending(true);
+    
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Get user email
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('id', user.id)
+          .single();
+
+        // Send notification to admin
+        await fetch('/api/notifications/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId,
+            userId: user.id,
+            userEmail: profile?.email || 'unknown',
+            amount: item.price,
+            itemDetails: {
+              bank: 'Wells Fargo',
+              vendor: item.vendor,
+              balance: item.balance,
+              price: item.price,
+              includes: item.includes
+            },
+            orderType: 'bank_log',
+            deliveryEmail: email
+          })
+        });
+
+        // Also save to orders table for history
+        await supabase
+          .from('orders')
+          .insert({
+            id: orderId,
+            user_id: user.id,
+            product_id: item.id,
+            amount: item.price,
+            status: 'completed',
+            payment_method: 'usdt',
+            delivery_email: email,
+            order_type: 'bank_log',
+            item_details: {
+              bank: 'Wells Fargo',
+              vendor: item.vendor,
+              balance: item.balance
+            }
+          });
+      }
+
+      // Call the original onComplete
+      onComplete();
+      
+    } catch (error) {
+      console.error('Error processing order:', error);
+      // Still call onComplete even if notification fails
+      onComplete();
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <div className="modal-overlay">
       <div className="payment-modal">
         <button className="close-btn" onClick={onClose}>×</button>
 
         <div className="modal-header">
-          <h2>💰 Logs City</h2>
+          <h2>💰 Cards City - Wells Fargo</h2>
           <p className="subtitle">Complete your payment</p>
         </div>
 
@@ -120,7 +190,7 @@ export default function PaymentModal({ item, email, onClose, onComplete }: Payme
             </div>
             <div className="summary-row">
               <span>Balance:</span>
-              <span>${item.balance.toLocaleString()}</span>
+              <span className="balance-highlight">${item.balance.toLocaleString()}</span>
             </div>
             <div className="summary-row">
               <span>Price:</span>
@@ -144,13 +214,25 @@ export default function PaymentModal({ item, email, onClose, onComplete }: Payme
             <p>Got an issue? <button className="support-link">Email us</button></p>
           </div>
 
-          {/* Complete Button (for demo) */}
+          {/* Complete Button */}
           <button 
-            className="btn-complete"
-            onClick={onComplete}
+            className={`btn-complete ${sending ? 'sending' : ''}`}
+            onClick={handleComplete}
+            disabled={sending}
           >
-            I've Sent Payment
+            {sending ? (
+              <>
+                <span className="spinner">⏳</span>
+                Processing...
+              </>
+            ) : (
+              "I've Sent Payment"
+            )}
           </button>
+
+          {sending && (
+            <p className="sending-note">Notifying admin... This may take a moment.</p>
+          )}
         </div>
       </div>
 
@@ -215,7 +297,7 @@ export default function PaymentModal({ item, email, onClose, onComplete }: Payme
         }
 
         .modal-header {
-          background: linear-gradient(135deg, #003399 0%, #0052cc 100%);
+          background: linear-gradient(135deg, #cd2e3e 0%, #a52834 100%);
           color: white;
           padding: 30px 30px 20px;
           border-radius: 20px 20px 0 0;
@@ -313,8 +395,8 @@ export default function PaymentModal({ item, email, onClose, onComplete }: Payme
         }
 
         .network-btn.active {
-          border-color: #003399;
-          background: #e6f0ff;
+          border-color: #cd2e3e;
+          background: #fee7e9;
         }
 
         .network-name {
@@ -388,16 +470,16 @@ export default function PaymentModal({ item, email, onClose, onComplete }: Payme
           gap: 10px;
           padding: 12px 25px;
           background: white;
-          border: 2px dashed #003399;
+          border: 2px dashed #cd2e3e;
           border-radius: 8px;
-          color: #003399;
+          color: #cd2e3e;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.2s;
         }
 
         .btn-scan:hover {
-          background: #f0f7ff;
+          background: #fee7e9;
         }
 
         .qr-icon {
@@ -457,9 +539,15 @@ export default function PaymentModal({ item, email, onClose, onComplete }: Payme
           color: #333;
         }
 
-        .price {
+        .balance-highlight {
           color: #28a745 !important;
+          font-weight: 700;
+        }
+
+        .price {
+          color: #cd2e3e !important;
           font-size: 18px;
+          font-weight: 700;
         }
 
         .email {
@@ -507,11 +595,46 @@ export default function PaymentModal({ item, email, onClose, onComplete }: Payme
           font-weight: 600;
           cursor: pointer;
           transition: all 0.2s;
+          position: relative;
+          overflow: hidden;
         }
 
-        .btn-complete:hover {
+        .btn-complete:hover:not(:disabled) {
           transform: translateY(-2px);
           box-shadow: 0 5px 20px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-complete:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+
+        .btn-complete.sending {
+          background: linear-gradient(135deg, #6c757d, #495057);
+        }
+
+        .spinner {
+          animation: spin 1s linear infinite;
+          display: inline-block;
+          margin-right: 8px;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        .sending-note {
+          text-align: center;
+          color: #666;
+          font-size: 13px;
+          margin-top: 10px;
+          animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
         }
 
         @media (max-width: 600px) {

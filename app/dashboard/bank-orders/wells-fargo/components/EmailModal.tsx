@@ -31,7 +31,7 @@ export default function EmailModal({ item, onClose, onSubmit }: EmailModalProps)
         <button className="close-btn" onClick={onClose}>×</button>
         
         <div className="modal-header">
-          <h2>📧 Logs City</h2>
+          <h2>📧 Cards City</h2>
           <p className="welcome-text">Hello 👋 user,</p>
         </div>
 
