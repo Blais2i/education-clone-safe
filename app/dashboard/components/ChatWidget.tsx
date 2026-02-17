@@ -1,18 +1,57 @@
+// app/dashboard/components/ChatWidget.tsx
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './ChatWidget.css';
 
+declare global {
+  interface Window {
+    Tawk_API: any;
+  }
+}
+
 export default function ChatWidget() {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    // Check if Tawk.to is loaded
+    const checkTawk = setInterval(() => {
+      if (window.Tawk_API) {
+        clearInterval(checkTawk);
+        
+        // Try to get unread count
+        try {
+          const count = window.Tawk_API.getUnreadCount?.() || 0;
+          setUnreadCount(count);
+        } catch (e) {
+          console.log('Tawk.to not ready');
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(checkTawk);
+  }, []);
+
+  const openChat = () => {
+    if (window.Tawk_API) {
+      window.Tawk_API.maximize();
+    } else {
+      // Fallback - open in new tab
+      window.open('https://tawk.to/chat/6994366d73d8cb1c357e385a/1jhlf97p4', '_blank');
+    }
+  };
+
   return (
-    <div className="chat-widget">
+    <div className="chat-widget" onClick={openChat}>
       <div className="chat-bubble">
-        <span className="chat-notification">1</span>
+        {unreadCount > 0 && (
+          <span className="chat-notification">{unreadCount}</span>
+        )}
         <svg viewBox="0 0 24 24" fill="white" width="30" height="30">
-          <path d="M12 2C6.5 2 2 6.5 2 12c0 2.3.8 4.5 2.3 6.3L2 22l3.7-2.3C7.5 21.2 9.7 22 12 22c5.5 0 10-4.5 10-10S17.5 2 12 2z"/>
+          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
         </svg>
       </div>
-      <p className="chat-text">We Are Here!</p>
+      <p className="chat-text">Chat with us</p>
     </div>
   );
 }

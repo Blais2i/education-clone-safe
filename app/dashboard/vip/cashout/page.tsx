@@ -62,20 +62,39 @@ export default function CashOutPage() {
   };
 
   const handlePaymentComplete = async () => {
-    if (!selectedAmount || !customerAddress) return;
+    if (!selectedAmount || !customerAddress || !customerCryptoType) return;
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) return;
+      if (!user) {
+        console.error('No user found');
+        return;
+      }
 
       const fee = calculateFee(selectedAmount);
       const youReceive = calculateYouReceive(selectedAmount);
+      
+      // Generate order ID
+      const orderId = `VIP-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+
+      // Get user email for notification
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile) {
+        console.error('No profile found');
+        return;
+      }
 
       // Create order in database
-      await supabase
+      const { error: orderError } = await supabase
         .from('orders')
         .insert({
+          id: orderId,
           user_id: user.id,
           amount: selectedAmount,
           fee: fee,
@@ -84,26 +103,68 @@ export default function CashOutPage() {
           payment_method: 'account_balance',
           crypto_address: customerAddress,
           crypto_type: customerCryptoType,
-          order_type: 'vip_cashout'
+          order_type: 'vip_cashout',
+          created_at: new Date().toISOString()
         });
 
+      if (orderError) {
+        console.error('Error creating order:', orderError);
+        throw orderError;
+      }
+
+      // Send notification to admin
+      const notificationResponse = await fetch('/api/notifications/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          userId: user.id,
+          userEmail: profile.email,
+          amount: selectedAmount,
+          itemDetails: {
+            amount: selectedAmount,
+            fee,
+            youReceive,
+            cryptoAddress: customerAddress,
+            cryptoType: customerCryptoType
+          },
+          orderType: 'vip_cashout',
+          customerAddress,
+          cryptoType: customerCryptoType
+        })
+      });
+
+      if (!notificationResponse.ok) {
+        console.error('Failed to send notification');
+      }
+
       // Deduct from balance
-      if (balance) {
-        await supabase
+      if (balance !== null) {
+        const { error: updateError } = await supabase
           .from('profiles')
           .update({ account_balance: balance - selectedAmount })
           .eq('id', user.id);
         
-        setBalance(balance - selectedAmount);
+        if (updateError) {
+          console.error('Error updating balance:', updateError);
+        } else {
+          setBalance(balance - selectedAmount);
+        }
       }
+
+      // Close modals and reset state
+      setShowPaymentModal(false);
+      setSelectedAmount(null);
+      setCustomerAddress('');
+      setCustomerCryptoType('USDT (TRC20)');
+
+      // Show success message or redirect
+      alert('Your cash-out request has been submitted successfully! You will receive your funds within 24-48 hours.');
 
     } catch (error) {
       console.error('Error creating order:', error);
+      alert('There was an error processing your request. Please try again or contact support.');
     }
-
-    setShowPaymentModal(false);
-    setSelectedAmount(null);
-    setCustomerAddress('');
   };
 
   return (

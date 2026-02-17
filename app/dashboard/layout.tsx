@@ -3,6 +3,7 @@ import React from 'react';
 import TopBar from './components/TopBar';
 import NavBar from './components/NavBar';
 import ChatWidget from './components/ChatWidget';
+import TawkToWidget from './components/TawkToWidget';
 import './dashboard.css';
 
 export default function DashboardLayout({
@@ -20,7 +21,8 @@ export default function DashboardLayout({
       <footer className="footer">
         <p>©2026 Cards City - Your Premium Marketplace</p>
       </footer>
-      <ChatWidget />
+      <TawkToWidget /> {/* This loads Tawk.to in the background */}
+      <ChatWidget />   {/* This is your custom chat button */}
     </div>
   );
 }
