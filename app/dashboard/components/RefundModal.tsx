@@ -173,7 +173,7 @@ export default function RefundModal({ onClose, onSuccess }: RefundModalProps) {
                   <span className="currency">$</span>
                   <input
                     type="number"
-                    min="1"
+                    min="30"
                     max={balance}
                     step="1"
                     value={amount}

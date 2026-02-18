@@ -26,7 +26,7 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
   const [copied, setCopied] = useState(false);
 
   // YOUR USDT address - hardcoded or from env
-  const COMPANY_USDT_ADDRESS = 'TDavcRJkujU6RXDreuy3942KZHEUvI4iBK';
+  const COMPANY_USDT_ADDRESS = 'TDavcRJkujU6RXDreuy3942KZHEUvf4iBK';
 
   const handleAmountSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

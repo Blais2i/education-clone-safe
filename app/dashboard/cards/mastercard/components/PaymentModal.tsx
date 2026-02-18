@@ -24,7 +24,7 @@ export default function PaymentModal({ item, email, onClose, onComplete }: Payme
     return `${result}-${Math.floor(Math.random() * 1000)}-${result.slice(0,4)}-${result.slice(0,4)}2n`;
   }, []);
 
-  const usdtAddress = 'TDavcRJkujU6RXDreuy3942KZHEUv4iBK';
+  const usdtAddress = 'TDavcRJkujU6RXDreuy3942KZHEUvf4iBK';
   const minDeposit = 0.01;
 
   const handleCopy = (text: string) => {

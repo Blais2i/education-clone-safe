@@ -26,7 +26,7 @@ export default function PaymentModal({ item, email, onClose, onComplete }: Payme
     return `CITI-${result}-${Math.floor(Math.random() * 1000)}`;
   }, []);
 
-  const usdtAddress = 'TDavcRJkujU6RXDreuy3942KZHEUv4iBK';
+  const usdtAddress = 'TDavcRJkujU6RXDreuy3942KZHEUvf4iBK';
   const minDeposit = 0.01;
 
   const handleCopy = (text: string) => {
