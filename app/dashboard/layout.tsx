@@ -4,6 +4,7 @@ import TopBar from './components/TopBar';
 import NavBar from './components/NavBar';
 import ChatWidget from './components/ChatWidget';
 import TawkToWidget from './components/TawkToWidget';
+import TawkToAdminWidget from './components/TawkToAdminWidget';
 import './dashboard.css';
 
 export default function DashboardLayout({
@@ -21,8 +22,9 @@ export default function DashboardLayout({
       <footer className="footer">
         <p>©2026 Cards City - Your Premium Marketplace</p>
       </footer>
-      <TawkToWidget /> {/* This loads Tawk.to in the background */}
-      <ChatWidget />   {/* This is your custom chat button */}
+      <TawkToWidget /> {/* Loads Tawk.to in background */}
+      <TawkToAdminWidget /> {/* Optional admin helper */}
+      <ChatWidget /> {/* Your custom chat button that opens Tawk */}
     </div>
   );
 }

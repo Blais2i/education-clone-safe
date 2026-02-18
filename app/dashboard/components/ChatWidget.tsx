@@ -12,20 +12,22 @@ declare global {
 
 export default function ChatWidget() {
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     // Check if Tawk.to is loaded
     const checkTawk = setInterval(() => {
       if (window.Tawk_API) {
-        clearInterval(checkTawk);
+        setIsReady(true);
         
-        // Try to get unread count
         try {
+          // Get unread count
           const count = window.Tawk_API.getUnreadCount?.() || 0;
           setUnreadCount(count);
         } catch (e) {
-          console.log('Tawk.to not ready');
+          console.log('Tawk.to not fully ready');
         }
+        clearInterval(checkTawk);
       }
     }, 1000);
 
@@ -33,7 +35,7 @@ export default function ChatWidget() {
   }, []);
 
   const openChat = () => {
-    if (window.Tawk_API) {
+    if (window.Tawk_API && window.Tawk_API.maximize) {
       window.Tawk_API.maximize();
     } else {
       // Fallback - open in new tab
@@ -51,7 +53,9 @@ export default function ChatWidget() {
           <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
         </svg>
       </div>
-      <p className="chat-text">Chat with us</p>
+      <p className="chat-text">
+        {isReady ? '💬 Chat with us' : '⚫ Loading chat...'}
+      </p>
     </div>
   );
 }

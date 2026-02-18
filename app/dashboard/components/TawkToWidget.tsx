@@ -17,8 +17,27 @@ export default function TawkToWidget() {
       return;
     }
 
-    // Initialize Tawk_API
+    // Initialize Tawk_API with event handlers
     window.Tawk_API = window.Tawk_API || {};
+    
+    // This will run when Tawk.to is fully loaded
+    window.Tawk_API.onLoad = function() {
+      console.log('Tawk.to loaded successfully');
+      
+      // You can pre-fill visitor info if needed - FIXED THE ERROR PARAMETER TYPE
+      window.Tawk_API.setAttributes({
+        name: 'Cards City Admin',
+        email: 'blaisealkado@gmail.com',
+        hash: 'optional-hash-for-secure-mode'
+      }, function(error: any) { // 👈 Added :any type here
+        if (error) {
+          console.error('Error setting Tawk.to attributes:', error);
+        } else {
+          console.log('Tawk.to attributes set successfully');
+        }
+      });
+    };
+
     window.Tawk_LoadStart = new Date();
 
     // Create and load the Tawk.to script

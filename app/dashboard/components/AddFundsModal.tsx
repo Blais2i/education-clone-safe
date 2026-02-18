@@ -4,6 +4,13 @@
 import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
+// Declare Tawk.to API
+declare global {
+  interface Window {
+    Tawk_API: any;
+  }
+}
+
 interface AddFundsModalProps {
   onClose: () => void;
   onSuccess: (amount: number) => void;
@@ -76,19 +83,103 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
     setLoading(true);
     
     try {
-      // Just notify that user clicked the button
-      // You'll manually verify later
+      // Get user email for notification
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', user?.id)
+        .single();
+
+      // Format the message for Tawk.to
+      const tawkMessage = `
+🔔 *NEW PAYMENT NOTIFICATION*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 *Amount:* $${deposit.amount_usd} USDT
+👤 *User:* ${profile?.email || 'Unknown'}
+🆔 *Deposit ID:* ${deposit.id}
+⏰ *Time:* ${new Date().toLocaleString()}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ *ACTION REQUIRED:*
+1️⃣ Check your USDT wallet (TRC20)
+2️⃣ Verify the amount sent
+3️⃣ Go to Supabase admin
+4️⃣ Confirm the deposit
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      `.trim();
+
+      // Try to send via Tawk.to with retry mechanism
+      let tawkSent = false;
+      let retryCount = 0;
+      const maxRetries = 5;
+
+      const trySendTawk = () => {
+        if (window.Tawk_API && typeof window.Tawk_API.sendMessage === 'function') {
+          try {
+            // Send as a message to admin
+            window.Tawk_API.sendMessage(tawkMessage);
+            
+            // Also create an event for tracking
+            if (window.Tawk_API.addEvent) {
+              window.Tawk_API.addEvent('new_payment', {
+                amount: deposit.amount_usd,
+                userId: user?.id,
+                depositId: deposit.id,
+                email: profile?.email,
+                timestamp: new Date().toISOString()
+              }, function(error: any) {
+                if (error) console.error('Tawk.to event error:', error);
+              });
+            }
+            
+            console.log('✅ Tawk.to message sent successfully');
+            tawkSent = true;
+            
+            // Optional: Maximize chat for immediate attention
+            // window.Tawk_API.maximize();
+            
+            return true;
+          } catch (e) {
+            console.error('❌ Error sending Tawk.to message:', e);
+            return false;
+          }
+        }
+        return false;
+      };
+
+      // Try immediately
+      if (!trySendTawk()) {
+        console.log('⏳ Tawk.to not ready, starting retry mechanism...');
+        
+        // If not ready, retry a few times
+        const interval = setInterval(() => {
+          retryCount++;
+          console.log(`⏳ Tawk.to retry attempt ${retryCount}/${maxRetries}`);
+          
+          if (trySendTawk() || retryCount >= maxRetries) {
+            clearInterval(interval);
+            
+            if (!tawkSent) {
+              console.log('⚠️ Tawk.to not available after retries, using API fallback');
+              
+              // Fallback to API endpoint
+              fetch('/api/notify-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  depositId: deposit.id,
+                  userId: deposit.user_id,
+                  amount: deposit.amount_usd,
+                  userEmail: profile?.email || 'unknown'
+                })
+              }).catch(err => console.error('Fallback API error:', err));
+            }
+          }
+        }, 1000); // Try every second
+      }
+
       setStep(3);
-      
-      // Optional: Send yourself a notification
-      await fetch('/api/notify-payment', {
-        method: 'POST',
-        body: JSON.stringify({
-          depositId: deposit.id,
-          userId: deposit.user_id,
-          amount: deposit.amount_usd
-        })
-      });
       
     } catch (err: any) {
       setError(err.message);
@@ -191,6 +282,7 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
                 <p>⚠️ Send ONLY USDT on TRC20 network to this address</p>
                 <p>⏱️ After sending, click the button below</p>
                 <p>👨‍💼 Admin will verify and credit your account manually</p>
+                <p>💬 You'll receive a chat confirmation from our team</p>
               </div>
 
               <button 
@@ -207,16 +299,23 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
             <div className="confirmation-section">
               <div className="success-icon">⏳</div>
               <h3>Payment Notification Sent!</h3>
-              <p>Thank you! Our team has been notified.</p>
+              <p>Thank you! Our team has been notified via live chat.</p>
               <div className="info-box">
                 <p><strong>Deposit Details:</strong></p>
-                <p>Amount: ${deposit?.amount_usd}</p>
-                <p>USDT Sent: {deposit?.amount_usdt} USDT</p>
-                <p>Date: {new Date().toLocaleString()}</p>
+                <p>💰 Amount: ${deposit?.amount_usd}</p>
+                <p>🪙 USDT Sent: {deposit?.amount_usdt} USDT</p>
+                <p>📅 Date: {new Date().toLocaleString()}</p>
+                <p>🆔 Deposit ID: {deposit?.id}</p>
+              </div>
+              <div className="tawk-notification">
+                <p>💬 <strong>✅ Live chat notification sent!</strong></p>
+                <p>Our admin will receive this instantly in their Tawk.to dashboard.</p>
+                <p className="small">(Check your Tawk.to dashboard for the message)</p>
               </div>
               <p className="processing-note">
                 🔔 An admin will verify your payment and credit your account within 24 hours.<br/>
-                You'll see the balance update automatically when processed.
+                You'll see the balance update automatically when processed.<br/>
+                Watch for a chat response from our team!
               </p>
               <button className="btn-close" onClick={onClose}>
                 Close
@@ -239,6 +338,12 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
           align-items: center;
           z-index: 10000;
           padding: 15px;
+          animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
 
         .funds-modal {
@@ -249,6 +354,18 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
           max-height: 90vh;
           overflow-y: auto;
           position: relative;
+          animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+          from {
+            transform: translateY(50px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
         }
 
         .close-btn {
@@ -261,6 +378,11 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
           cursor: pointer;
           color: #999;
           z-index: 1;
+          transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+          color: #333;
         }
 
         .modal-header {
@@ -323,6 +445,7 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
           border: 2px solid #e0e0e0;
           border-radius: 10px;
           font-size: 18px;
+          transition: border-color 0.2s;
         }
 
         .amount-input-group input:focus {
@@ -346,6 +469,7 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
           font-size: 16px;
           font-weight: 600;
           cursor: pointer;
+          transition: all 0.2s;
         }
 
         .btn-proceed:hover {
@@ -364,6 +488,7 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
           display: block;
           margin-bottom: 10px;
           font-weight: 600;
+          color: #333;
         }
 
         .address-box {
@@ -380,6 +505,7 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
           border-radius: 8px;
           font-size: 14px;
           word-break: break-all;
+          font-family: monospace;
         }
 
         .copy-btn {
@@ -390,6 +516,11 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
           border-radius: 8px;
           cursor: pointer;
           white-space: nowrap;
+          transition: background 0.2s;
+        }
+
+        .copy-btn:hover {
+          background: #2563eb;
         }
 
         .qr-placeholder {
@@ -409,6 +540,11 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
           border-radius: 10px;
           padding: 20px;
           margin: 20px 0;
+        }
+
+        .order-summary h4 {
+          color: #333;
+          margin-bottom: 10px;
         }
 
         .summary-row {
@@ -436,6 +572,10 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
           margin: 20px 0;
         }
 
+        .instructions p {
+          margin: 5px 0;
+        }
+
         .btn-confirm {
           width: 100%;
           padding: 16px;
@@ -446,6 +586,7 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
           font-size: 16px;
           font-weight: 600;
           cursor: pointer;
+          transition: all 0.2s;
         }
 
         .btn-confirm:hover {
@@ -472,7 +613,28 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
         }
 
         .info-box p {
+          margin: 8px 0;
+          color: #333;
+        }
+
+        .tawk-notification {
+          background: #e8f4fd;
+          border-left: 4px solid #3b82f6;
+          padding: 15px;
+          border-radius: 8px;
+          margin: 15px 0;
+          text-align: left;
+        }
+
+        .tawk-notification p {
           margin: 5px 0;
+          color: #1e40af;
+        }
+
+        .tawk-notification .small {
+          font-size: 12px;
+          color: #64748b;
+          margin-top: 8px;
         }
 
         .processing-note {
@@ -482,6 +644,7 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
           border-radius: 8px;
           margin: 20px 0;
           font-size: 14px;
+          line-height: 1.6;
         }
 
         .btn-close {
@@ -493,6 +656,11 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
           border-radius: 10px;
           font-size: 16px;
           cursor: pointer;
+          transition: background 0.2s;
+        }
+
+        .btn-close:hover {
+          background: #5a6268;
         }
 
         .status-section {
@@ -503,6 +671,29 @@ export default function AddFundsModal({ onClose, onSuccess }: AddFundsModalProps
         .status-section h3 {
           color: #f59e0b;
           margin-bottom: 10px;
+        }
+
+        @media (max-width: 600px) {
+          .modal-header {
+            padding: 20px;
+          }
+
+          .modal-body {
+            padding: 20px;
+          }
+
+          .address-box {
+            flex-direction: column;
+          }
+
+          .address-box code {
+            width: 100%;
+            text-align: center;
+          }
+
+          .copy-btn {
+            width: 100%;
+          }
         }
       `}</style>
     </div>
